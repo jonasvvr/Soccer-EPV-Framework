@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "matplotlib": "^1.0.0",
-    "pandas": "^0.0.3"
+    "pandas": "^0.0.3",
+    "scipy": "^0.1.4"
   }
 }
