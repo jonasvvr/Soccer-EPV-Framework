@@ -4,3 +4,4 @@ node_modules
 __pycache__
 sample-data
 *.txt
+bru_data
