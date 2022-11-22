@@ -19,6 +19,23 @@ def read_event_data(DATA_DIR):
 
     return events
 
+def read_dir_event_data(DATA_DIR):
+    all_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
+
+    li = []
+    for filename in all_files:
+        df = pd.read_json(
+            filename,
+            compression='gzip'
+        )
+
+        df = pd.DataFrame(df['liveData']['event'])
+        df = df.drop(['contestantId', 'timeStamp', 'lastModified', 'playerId', 'id', 'eventId'], axis=1)
+    
+        li.append(df)
+
+    return pd.concat(li, axis=0, ignore_index=True)  
+
 def find_qualifier(list: list, id: int): 
     dict = next((item for item in list if item['qualifierId'] == id), None)
     if dict == None: 
