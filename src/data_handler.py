@@ -6,8 +6,6 @@ import gzip
 
 def read_event_data(DATA_DIR):
 
-    # all_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
-
     filename = f'{DATA_DIR}/ma3-match-events.json.gz'
 
     df = pd.read_json(
@@ -37,8 +35,9 @@ def read_dir_event_data(DATA_DIR):
 
     return pd.concat(li, axis=0, ignore_index=True)  
 
-def read_tracking_data_single(DATA_DIR): 
-    filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
+def read_tracking_data_single(DATA_DIR, filename=''): 
+    if filename == '':
+        filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
 
     columns = ['Framecount', 'Match period', 'Match status', 'column 5', 'Ball xyz']
 
@@ -83,6 +82,17 @@ def read_tracking_data_single(DATA_DIR):
     data = pd.DataFrame(data, columns=columns)
  
     return data
+
+def read_tracking_data(DATA_DIR):
+    all_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-25fps.txt.gz', recursive=True)
+
+    li = []
+    for filename in all_files:
+        df = read_tracking_data_single(DATA_DIR, filename=filename)
+        li.append(df)
+
+    return pd.concat(li, axis=0, ignore_index=True) 
+
    
 
 def find_qualifier(list: list, id: int): 
