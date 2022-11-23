@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import glob
 from typing import Tuple
+import gzip
 
 def read_event_data(DATA_DIR):
 
@@ -36,6 +37,54 @@ def read_dir_event_data(DATA_DIR):
 
     return pd.concat(li, axis=0, ignore_index=True)  
 
+def read_tracking_data_single(DATA_DIR): 
+    filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
+
+    columns = ['Framecount', 'Match period', 'Match status', 'column 5', 'Ball xyz']
+
+    data = [] 
+    # data.append(columns)
+
+    with gzip.open(filename,'rt') as f: 
+        for line in f: 
+            line = line.split(':')
+            if len(line) != 3: continue
+
+
+            part1 = line[0]
+            part1 = part1.split(';')
+            assert len(part1) == 2, 'part1 must be len = 2'
+            part1.pop(0) # remove timestamp from txt file
+            part1 = part1[0].split(',')
+            assert len(part1) == 3, 'part1 must be len = 3'
+
+            part2 = line[1]
+            part2 = part2.split(';')
+            part2_new = []
+            for p_data in part2:
+                p_data = p_data.split(',')
+                if len(p_data) != 5: continue
+                part2_new.append(p_data)
+
+            part3 = line[2]
+            part3 = part3.split(';')
+            if len(part3) == 2: 
+                part3.pop(1)
+            part3 = part3[0].split(',')
+            assert len(part3) == 3, 'part3 must be len = 3'
+
+
+            full = part1
+            full.append(part2_new)
+            full.append(part3)
+
+            data.append(full)
+    
+    data = pd.DataFrame(data, columns=columns)
+ 
+    return data
+   
+
 def find_qualifier(list: list, id: int): 
     dict = next((item for item in list if item['qualifierId'] == id), None)
     if dict == None: 
@@ -57,5 +106,3 @@ def scale_coord(xy: Tuple[float,float], field_dimen: Tuple[float,float] = (106.0
 
 def conv_scale(xy: Tuple[float,float], field_dimen: Tuple[float,float] = (106.0,68)):
     return convert_to_middle_origin(scale_coord(xy,field_dimen),field_dimen)
-    
-
