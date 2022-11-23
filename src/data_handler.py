@@ -39,7 +39,7 @@ def read_tracking_data_single(DATA_DIR, filename=''):
     if filename == '':
         filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
 
-    columns = ['Framecount', 'Match period', 'Match status', 'column 5', 'Ball xyz']
+    columns = ['Framecount', 'Match period', 'Match status', 'Column 5', 'Ball xyz']
 
     data = [] 
     # data.append(columns)
