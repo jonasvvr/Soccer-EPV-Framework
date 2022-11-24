@@ -132,13 +132,13 @@ def plot_frame( tracking_frame, figax=None, field_dimen = (106.0,68.0), include_
     data = tracking_frame['Column 5']
     ball_xyz = tracking_frame['Ball xyz']
 
-    ball_xy = dh.convert_to_middle_origin((float(ball_xyz[0]), float(ball_xyz[1])))
+    ball_xy = dh.convert_to_middle_origin((ball_xyz[0], ball_xyz[1]))
 
     for row in data: 
-        object_type = row[0]
-        player_id = row[1]
-        shirt_number = row[2]
-        xy = dh.convert_to_middle_origin((float(row[3]), float(row[4])))
+        object_type = row['Object type']
+        player_id = row['Player id']
+        shirt_number = row['Shirt number']
+        xy = dh.convert_to_middle_origin((row['x'], row['y']))
         ax.plot( xy[0], xy[1], color=getColor(object_type), marker='o', markersize=PlayerMarkerSize, alpha=PlayerAlpha)
 
         if annotate:
@@ -148,17 +148,16 @@ def plot_frame( tracking_frame, figax=None, field_dimen = (106.0,68.0), include_
     return fig,ax
     
 def getColor(object_type):
-    object_type = int(object_type)
     match object_type: 
-        case 0: 
+        case '0': 
             return 'r'
-        case 1: 
+        case '1': 
             return 'b'
-        case 2:
+        case '2':
             return 'c'
-        case 3: 
+        case '3': 
             return 'r'
-        case 4: 
+        case '4': 
             return 'b'
         case _: 
             raise ValueError(f'Object type has an invalid value: {object_type}')

@@ -40,7 +40,7 @@ def read_tracking_data_single(DATA_DIR, filename=''):
         filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
 
     columns = ['Framecount', 'Match period', 'Match status', 'Column 5', 'Ball xyz']
-
+    column5_names = ['Object type', 'Player id', 'Shirt number', 'x', 'y']
     data = [] 
     # data.append(columns)
 
@@ -48,7 +48,6 @@ def read_tracking_data_single(DATA_DIR, filename=''):
         for line in f: 
             line = line.split(':')
             if len(line) != 3: continue
-
 
             part1 = line[0]
             part1 = part1.split(';')
@@ -63,15 +62,18 @@ def read_tracking_data_single(DATA_DIR, filename=''):
             for p_data in part2:
                 p_data = p_data.split(',')
                 if len(p_data) != 5: continue
+                p_data[3] = float(p_data[3])
+                p_data[4] = float(p_data[4])
+                p_data = dict(zip(column5_names,p_data))
                 part2_new.append(p_data)
-
+            
             part3 = line[2]
             part3 = part3.split(';')
             if len(part3) == 2: 
                 part3.pop(1)
             part3 = part3[0].split(',')
             assert len(part3) == 3, 'part3 must be len = 3'
-
+            part3 = [float(i) for i in part3]
 
             full = part1
             full.append(part2_new)
