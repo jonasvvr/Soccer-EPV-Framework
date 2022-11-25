@@ -139,10 +139,16 @@ def plot_frame( tracking_frame, figax=None, field_dimen = (106.0,68.0), include_
         player_id = row['Player id']
         shirt_number = row['Shirt number']
         xy = dh.convert_to_middle_origin((row['x'], row['y']))
-        ax.plot( xy[0], xy[1], color=getColor(object_type), marker='o', markersize=PlayerMarkerSize, alpha=PlayerAlpha)
+        color = getColor(object_type)
+        ax.plot( xy[0], xy[1], color=color, marker='o', markersize=PlayerMarkerSize, alpha=PlayerAlpha)
+
+        if include_player_velocities:
+            vx = row['vx']
+            vy = row['vy']
+            ax.quiver( xy[0], xy[1], vx, vy, color=color, scale_units='inches', scale=10.,width=0.0015,headlength=5,headwidth=3,alpha=PlayerAlpha)
 
         if annotate:
-            ax.text( xy[0]+0.5, xy[1]+0.5, shirt_number, fontsize=10, color=getColor(object_type))
+            ax.text( xy[0]+0.7, xy[1]+0.7, shirt_number, fontsize=10, color=color)
 
     ax.plot( ball_xy[0], ball_xy[1], 'k', marker='o', markersize=6, alpha=1.0, linewidth=0)
     return fig,ax
