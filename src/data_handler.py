@@ -4,6 +4,11 @@ import glob
 from typing import Tuple
 import gzip
 
+
+"""
+TODO normalize data p78 fernandez
+"""
+
 def read_event_data(DATA_DIR):
 
     filename = f'{DATA_DIR}/ma3-match-events.json.gz'
