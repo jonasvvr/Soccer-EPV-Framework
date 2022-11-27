@@ -7,7 +7,7 @@ TODO angle ball
 """
 
 
-def calc_spatial_features(tracking_data, maxspeed=12, frame_diff = 0.040, field_dimen = (106.0,68.0), calc_angle_goal=False, calc_distances=False):
+def calc_spatial_features(tracking_data, maxspeed=12, frame_diff = 0.100, field_dimen = (106.0,68.0), calc_angle_goal=False, calc_distances=False):
     
     g = np.array([field_dimen[0], field_dimen[1]/2])
 
@@ -36,7 +36,7 @@ def calc_spatial_features(tracking_data, maxspeed=12, frame_diff = 0.040, field_
             # player angle to opponent's goal
             if calc_angle_goal:
                 p = np.array([player_x, player_y])
-                angle_goal = calc_angle_goal(p,g)
+                angle_goal = calc_angle_to_goal(p,g)
                 p_data['Angle goal'] = angle_goal
             # player angle to ball
             if calc_distances:
@@ -63,7 +63,7 @@ def calc_player_velocity(player_x, player_y, prev_xy, player_id, frame_diff):
     v = np.sqrt(vx*vx + vy*vy)
     return vx,vy,v
 
-def calc_angle_goal(p,g):
+def calc_angle_to_goal(p,g):
     gp = g - p
     w = gp / np.linalg.norm(gp)
     z = np.array([1,0])

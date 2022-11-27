@@ -34,7 +34,7 @@ def read_dir_event_data(DATA_DIR):
         )
 
         df = pd.DataFrame(df['liveData']['event'])
-        df = df.drop(['contestantId', 'timeStamp', 'lastModified', 'playerId', 'id', 'eventId'], axis=1)
+        df = df.drop(['contestantId', 'timeStamp', 'lastModified', 'id', 'eventId'], axis=1)
     
         li.append(df)
 
@@ -42,9 +42,9 @@ def read_dir_event_data(DATA_DIR):
 
 def read_tracking_data_single(DATA_DIR, filename=''): 
     if filename == '':
-        filename = f'{DATA_DIR}/opt-tracking-25fps.txt.gz'
+        filename = f'{DATA_DIR}/opt-tracking-10fps.txt.gz'
 
-    columns = ['Framecount', 'Match period', 'Match status', 'Column 5', 'Ball xyz']
+    columns = ['Timestamp', 'Framecount', 'Match period', 'Match status', 'Column 5', 'Ball xyz']
     column5_names = ['Object type', 'Player id', 'Shirt number', 'x', 'y']
     data = [] 
     # data.append(columns)
@@ -57,9 +57,9 @@ def read_tracking_data_single(DATA_DIR, filename=''):
             part1 = line[0]
             part1 = part1.split(';')
             assert len(part1) == 2, 'part1 must be len = 2'
-            part1.pop(0) # remove timestamp from txt file
-            part1 = part1[0].split(',')
-            assert len(part1) == 3, 'part1 must be len = 3'
+            part1.extend(part1[1].split(','))
+            part1.pop(1)
+            assert len(part1) == 4, 'part1 must be len = 4'
 
             part2 = line[1]
             part2 = part2.split(';')
@@ -91,7 +91,7 @@ def read_tracking_data_single(DATA_DIR, filename=''):
     return data
 
 def read_tracking_data(DATA_DIR):
-    all_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-25fps.txt.gz', recursive=True)
+    all_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-10fps.txt.gz', recursive=True)
 
     li = []
     for filename in all_files:
