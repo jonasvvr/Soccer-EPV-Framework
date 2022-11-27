@@ -1,3 +1,4 @@
+import numpy as np
 import data_handler as dh
 import visualization as viz
 import spatial_features as spf
@@ -7,7 +8,7 @@ import pandas as pd
 DATA_DIR_single = '../bru_data/data/comp-4zwgbb66rif2spcoeeol2motx/tmcl-1qtpbdbeudho5i7fu5z2lp2j8/fx-4sekj9hgwxzq3y4ih9415239w'
 DATA_DIR = '../bru_data/data/comp-4zwgbb66rif2spcoeeol2motx/tmcl-1qtpbdbeudho5i7fu5z2lp2j8'
 
-event_data_single = dh.read_event_data(DATA_DIR_single)
+# event_data_single = dh.read_event_data(DATA_DIR_single)
 # event_data = dh.read_dir_event_data(DATA_DIR)
 
 tracking_single = dh.read_tracking_data_single(DATA_DIR_single)

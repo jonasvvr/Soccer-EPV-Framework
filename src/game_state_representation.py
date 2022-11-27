@@ -1,5 +1,3 @@
-
-
 import numpy as np
 
 
@@ -83,13 +81,16 @@ def get_loc_vel_matrices(tracking_data, timestamp, attacking_team, match_period)
     return loc_att, loc_def, vx_att, vx_def, vy_att, vy_def
 
 
-def get_distances_matrices(tracking_data, timestamp, match_period): 
+def get_distances_angle_matrices(tracking_data, timestamp, match_period): 
     dist_b = np.empty([106,68])
     dist_g = np.empty([106,68])
+    angle_ball = np.empty([106,68], dtype=list)
+    angle_goal = np.empty([106,68], dtype=list)
+    angle_goal_rad = np.empty([106,68])
 
     row = tracking_data[(tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
-    ball_xy = row['Ball xyz'].iloc[0][:-1]
-    goal_xy = [106, 68/2]
+    ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
+    goal_xy = np.array([106, 68/2])
 
     for x in range(106):
         for y in range(68): 
@@ -101,4 +102,35 @@ def get_distances_matrices(tracking_data, timestamp, match_period):
             distance_goal = np.linalg.norm(a - goal_xy)
             dist_g[x,y] = distance_goal
 
-    return dist_b, dist_g
+            cos_ball = get_cosine_angle(a, ball_xy)
+            sin_ball = get_sine_angle(a, ball_xy)
+            angle_ball[x,y] = [sin_ball, cos_ball]
+            
+            cos_goal = get_cosine_angle(a, goal_xy)
+            sin_goal = get_sine_angle(a, goal_xy)
+            angle_goal[x,y] = [sin_goal, cos_goal]
+
+            angle_goal_rad[x,y] = get_angle_rad(a, goal_xy)
+
+    return dist_b, dist_g, angle_ball, angle_goal, angle_goal_rad
+
+def get_cosine_angle(vec1, vec2):
+    dot = np.dot(vec1, vec2)
+    vec1_mag = np.linalg.norm(vec1)
+    vec2_mag = np.linalg.norm(vec2)
+    denom = vec1_mag * vec2_mag
+    if denom == 0: return 0
+    return dot / denom
+
+def get_sine_angle(vec1, vec2):
+    cross = np.cross(vec1, vec2)
+    cross_norm = np.linalg.norm(cross)
+    vec1_mag = np.linalg.norm(vec1)
+    vec2_mag = np.linalg.norm(vec2)
+    denom = vec1_mag * vec2_mag
+    if denom == 0: return 0
+    return cross_norm / denom
+
+def get_angle_rad(vec1, vec2):
+    sine = get_sine_angle(vec1, vec2)
+    return np.arcsin(sine)
