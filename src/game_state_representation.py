@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import spatial
 
 
 def get_tracking_data_snapshot(tracking_data, timestamp, attacking_team, match_period, field_dimen = (106.0,68)):
@@ -40,6 +41,8 @@ def get_loc_vel_matrices(tracking_data, timestamp, attacking_team, match_period)
     vx_def = np.empty([106,68])
     vy_att = np.empty([106,68])
     vy_def = np.empty([106,68])
+    cos_angle = np.empty([106,68])
+    sin_angle = np.empty([106,68])
 
     referee = '2'
     attacking_team_gk = int(attacking_team) + 2
@@ -48,13 +51,16 @@ def get_loc_vel_matrices(tracking_data, timestamp, attacking_team, match_period)
     # Get row with timestamp
     row = tracking_data[(tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
     all_player_data = row['Column 5'].iloc[0]
+    ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
 
+    ball_carier = get_ball_carier(all_player_data, ball_xy)
 
+    if not ball_carier['vx']:
+        raise ValueError('Calculate velocities first')
+        
+    velocity_vector_bc = [ball_carier['vx'], ball_carier['vy']]
 
     for player_data in all_player_data:
-
-        if not player_data['vx']:
-            raise ValueError('Calculate velocities first')
 
         x = int(player_data['x'])
         y = int(player_data['y'])
@@ -69,6 +75,11 @@ def get_loc_vel_matrices(tracking_data, timestamp, attacking_team, match_period)
             vx_att[x,y] = vx
             vy_att[x,y] = vy
 
+            # Cos angle Sin angle between velocities
+            vel_vec = [vx, vy]
+            sin_angle[x,y] = get_sine_angle(vel_vec, velocity_vector_bc)
+            cos_angle[x,y] = get_cosine_angle(vel_vec, velocity_vector_bc)
+
         if (player_data['Object type'] not in is_attacking) & (player_data['Object type'] != referee):  
             # Location
             loc_def[x, y] = [player_data['x'], player_data['y']]
@@ -78,7 +89,7 @@ def get_loc_vel_matrices(tracking_data, timestamp, attacking_team, match_period)
             vy_def[x,y] = vy
 
 
-    return loc_att, loc_def, vx_att, vx_def, vy_att, vy_def
+    return loc_att, loc_def, vx_att, vx_def, vy_att, vy_def, cos_angle, sin_angle
 
 
 def get_distances_angle_matrices(tracking_data, timestamp, match_period): 
@@ -134,3 +145,19 @@ def get_sine_angle(vec1, vec2):
 def get_angle_rad(vec1, vec2):
     sine = get_sine_angle(vec1, vec2)
     return np.arcsin(sine)
+
+def get_ball_carier(all_player_data, ball_xy): 
+    coords = []
+    dict_ = {}
+
+    for p_data in all_player_data:
+        coord = (p_data['x'], p_data['y'])
+        coords.append(coord)
+        dict_[coord] = p_data
+    
+    tree = spatial.KDTree(coords)
+    (_, idx) = tree.query(ball_xy)
+    closest = coords[idx]
+    closest_player = dict_[closest]
+    return closest_player
+    
