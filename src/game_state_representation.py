@@ -100,8 +100,8 @@ def get_dense_matrices(row, field_dimen):
     ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
     goal_xy = np.array([field_dimen[0], field_dimen[1] / 2])
 
-    for x in range(106):
-        for y in range(68):
+    for x in range(field_dimen[0]):
+        for y in range(field_dimen[1]):
             a = np.array([x, y])
 
             distance_ball = np.linalg.norm(a - ball_xy)
