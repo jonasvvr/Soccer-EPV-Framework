@@ -144,7 +144,7 @@ def scale_event_coords(event, field_dimen):
     return event
 
 
-def read_event_tracking_data(DATA_DIR, field_dimen, fps=10):
+def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000):
     all_event_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
     all_tracking_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-{fps}fps.txt.gz', recursive=True)
 
@@ -162,61 +162,77 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10):
         k = 0
         for _, pass_event in passing_events.iterrows():
 
-            if (k % 10 == 0) | (k == 0):
-                print(f'-- Reading event {k}')
-            timestamp = get_frame(pass_event['timeMin'], pass_event['timeSec'])
+            # if (k % 50 == 0) | (k == 0):
+            #     print(f'-- Reading event {k}')
+
             match_period = str(pass_event['periodId'])
+            timestamp = get_frame(pass_event['timeMin'], pass_event['timeSec'], match_period)
+
             row = tracking_data[
                 (tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
             index = tracking_data[(tracking_data['Framecount'] == timestamp) & (
                     tracking_data['Match period'] == match_period)].index.values[0]
-            attacking_team = get_attacking_team(pass_event, row)
 
+            ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
+            ball_carrier = gsr.get_ball_carier(row['Column 5'].iloc[0], ball_xy)
+            ball_carrier_xy = np.array([ball_carrier['x'], ball_carrier['y']])
+            if np.linalg.norm(ball_xy - ball_carrier_xy) > tracking_accuracy:
+                k += 1
+                continue
+
+
+            attacking_team = get_attacking_team(pass_event, row)
             row = spf.calc_spatial_features(row, index, tracking_data)
             game_state_rep = gsr.get_game_state_representation(row, attacking_team, field_dimen)
-
-            outcome = pass_event['outcome']
-
-            pass_event = pass_event.drop(
-                ['typeId', 'periodId', 'timeMin', 'timeSec', 'playerId', 'playerName', 'outcome', 'assist', 'keyPass'])
 
             endx = float(get_qualifier_value(pass_event['qualifier'], 140))
             endy = float(get_qualifier_value(pass_event['qualifier'], 141))
 
+            outcome = pass_event['outcome']
             pass_event['endx'] = endx
             pass_event['endy'] = endy
-            pass_event = pass_event.drop(['qualifier'])
             pass_event = scale_event_coords(pass_event, field_dimen)
-
-            event = {
-                'Event': pass_event,
-                'Loc attack': game_state_rep[0],
-                'Loc defend': game_state_rep[1],
-                'vx attack': game_state_rep[2],
-                'vx defend': game_state_rep[3],
-                'vy attack': game_state_rep[4],
-                'vy defend': game_state_rep[5],
-                'Distance ball': game_state_rep[6],
-                'Distance goal': game_state_rep[7],
-                'Angle ball': game_state_rep[8],
-                'Angle goal': game_state_rep[9],
-                'Angle goal rad': game_state_rep[10],
-                'Ball carier sine': game_state_rep[11],
-                'Ball carier cosine': game_state_rep[12],
-                'Outcome': outcome
+            pass_json = {
+                'x': pass_event['x'],
+                'y': pass_event['y'],
+                'endx': endx,
+                'endy': endy
             }
+
+            event = pd.DataFrame()
+            event['Event'] = [pass_json]
+            event['Loc attack'] = [game_state_rep[0]]
+            event['Loc defend'] = [game_state_rep[1]]
+            event['vx attack'] = [game_state_rep[2]]
+            event['vx defend'] = [game_state_rep[3]]
+            event['vy attack'] = [game_state_rep[4]]
+            event['vy defend'] = [game_state_rep[5]]
+            event['Distance ball'] = [game_state_rep[6]]
+            event['Distance goal'] = [game_state_rep[7]]
+            event['Angle ball'] = [game_state_rep[8]]
+            event['Angle goal'] = [game_state_rep[9]]
+            event['Angle goal rad'] = [game_state_rep[10]]
+            event['Ball carier sine'] = [game_state_rep[11]]
+            event['Ball carier cosine'] = [game_state_rep[12]]
+            event['Outcome'] = outcome
 
             data.append(event)
             k += 1
+            if len(data) == max_len_data:
+                break
 
-        if i == 0:
+        if (i == (num_files-1)) & (num_files != 0):
             break
+        if len(data) == max_len_data:
+            break
+    return pd.concat(data, axis=0, ignore_index=True)
 
-    data = pd.DataFrame(data)
-    return data
 
+def get_frame(time_min, time_sec, match_period):
+    if match_period == '2':
+        time_2 = time_min - 45
+        return str((time_2 * 60 + time_sec) * 1000)
 
-def get_frame(time_min, time_sec):
     return str((time_min * 60 + time_sec) * 1000)
 
 
