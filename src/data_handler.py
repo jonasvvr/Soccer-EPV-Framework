@@ -133,6 +133,7 @@ def scale_coord(xy: Tuple[float, float], field_dimen):
 def conv_scale(xy: Tuple[float, float], field_dimen):
     return convert_to_middle_origin(scale_coord(xy, field_dimen), field_dimen)
 
+
 def scale_event_coords(event, field_dimen):
     if 'endx' not in event.keys():
         raise ValueError('End coords do not exist')
@@ -150,7 +151,7 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10):
     data = []
 
     for i in range(len(all_event_files)):
-        print(f'Reading file {i+1}...')
+        print(f'Reading file {i + 1}...')
         event_file = all_event_files[i]
         tracking_file = all_tracking_files[i]
 
@@ -158,14 +159,17 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10):
         event_data = read_event_data(DATA_DIR, filename=event_file)
         passing_events = event_data[event_data['typeId'] == 1]
 
-        for i, pass_event in passing_events.iterrows():
-            print(f'-- Reading event {i}')
+        k = 0
+        for _, pass_event in passing_events.iterrows():
+
+            if (k % 10 == 0) | (k == 0):
+                print(f'-- Reading event {k}')
             timestamp = get_frame(pass_event['timeMin'], pass_event['timeSec'])
             match_period = str(pass_event['periodId'])
             row = tracking_data[
                 (tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
             index = tracking_data[(tracking_data['Framecount'] == timestamp) & (
-                        tracking_data['Match period'] == match_period)].index.values[0]
+                    tracking_data['Match period'] == match_period)].index.values[0]
             attacking_team = get_attacking_team(pass_event, row)
 
             row = spf.calc_spatial_features(row, index, tracking_data)
@@ -203,8 +207,9 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10):
             }
 
             data.append(event)
+            k += 1
 
-        if i == 5:
+        if i == 0:
             break
 
     data = pd.DataFrame(data)
@@ -219,17 +224,19 @@ def get_attacking_team(event, row):
     player_id = event['playerId']
     list = row['Column 5'].iloc[0]
 
-    dict = next((item for item in list if item['Player id'] == player_id), None)
+    dict = next((item for item in list if item['Player id'] == player_id),
+                ValueError(f'No player found! \n{list}\n{player_id}')
+                )
 
     object_type = dict['Object type']
 
-    match dict['Object type']:
+    match object_type:
         case '0':
             return '0'
         case '1':
             return '1'
         case '2':
-            raise ValueError('returned referee')
+            raise ValueError('Returned referee')
         case '3':
             return '0'
         case '4':
