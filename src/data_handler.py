@@ -144,7 +144,8 @@ def scale_event_coords(event, field_dimen):
     return event
 
 
-def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000, save_every=3):
+def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000,
+                             save_every=5):
     all_event_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
     all_tracking_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-{fps}fps.txt.gz', recursive=True)
 
@@ -153,7 +154,7 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
     for i in range(len(all_event_files)):
         if (i % save_every == 0) & (i != 0):
             data_df = pd.concat(data, axis=0, ignore_index=True)
-            data_df.to_csv('../out/pass_data.csv', index=False)
+            data_df.to_pickle('../out/pass_data2.pkl')
 
         print(f'Reading file {i + 1}...')
         event_file = all_event_files[i]
@@ -192,7 +193,6 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
                 k += 1
                 continue
 
-
             attacking_team = get_attacking_team(pass_event, row)
 
             if attacking_team is None:
@@ -201,6 +201,10 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
 
             row = spf.calc_spatial_features(row, index, tracking_data)
             game_state_rep = gsr.get_game_state_representation(row, attacking_team, field_dimen)
+            # count = np.count_nonzero(game_state_rep[0])
+            # if count != 11:
+            #     print(f'Only {count} players on attacking team')
+            # continue
 
             endx = float(get_qualifier_value(pass_event['qualifier'], 140))
             endy = float(get_qualifier_value(pass_event['qualifier'], 141))
@@ -216,29 +220,32 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
                 'endy': endy
             }
 
-            event = pd.DataFrame()
-            event['Event'] = [pass_json]
-            event['Loc attack'] = [game_state_rep[0]]
-            event['Loc defend'] = [game_state_rep[1]]
-            event['vx attack'] = [game_state_rep[2]]
-            event['vx defend'] = [game_state_rep[3]]
-            event['vy attack'] = [game_state_rep[4]]
-            event['vy defend'] = [game_state_rep[5]]
-            event['Distance ball'] = [game_state_rep[6]]
-            event['Distance goal'] = [game_state_rep[7]]
-            event['Angle ball'] = [game_state_rep[8]]
-            event['Angle goal'] = [game_state_rep[9]]
-            event['Angle goal rad'] = [game_state_rep[10]]
-            event['Ball carrier sine'] = [game_state_rep[11]]
-            event['Ball carrier cosine'] = [game_state_rep[12]]
-            event['Outcome'] = outcome
+            column_names = ['Event', 'Loc attack', 'Loc defend', 'vx attack', 'vx defend', 'vy attack', 'vy defend',
+                            'Distance ball', 'Distance goal', 'Angle ball', 'Angle goal', 'Angle goal rad',
+                            'Ball carrier sine', 'Ball carrier cosine', 'Outcome']
+            event = pd.DataFrame(columns=column_names)
+            event.loc[0, 'Event'] = [pass_json]
+            event.loc[0, 'Loc attack'] = game_state_rep[0]
+            event.loc[0, 'Loc defend'] = game_state_rep[1]
+            event.loc[0, 'vx attack'] = game_state_rep[2]
+            event.loc[0, 'vx defend'] = game_state_rep[3]
+            event.loc[0, 'vy attack'] = game_state_rep[4]
+            event.loc[0, 'vy defend'] = game_state_rep[5]
+            event.loc[0, 'Distance ball'] = game_state_rep[6]
+            event.loc[0, 'Distance goal'] = game_state_rep[7]
+            event.loc[0, 'Angle ball'] = game_state_rep[8]
+            event.loc[0, 'Angle goal'] = game_state_rep[9]
+            event.loc[0, 'Angle goal rad'] = game_state_rep[10]
+            event.loc[0, 'Ball carrier sine'] = game_state_rep[11]
+            event.loc[0, 'Ball carrier cosine'] = game_state_rep[12]
+            event.loc[0, 'Outcome'] = outcome
 
             data.append(event)
             k += 1
             if len(data) == max_len_data:
                 break
 
-        if (i == (num_files-1)) & (num_files != 0):
+        if (i == (num_files - 1)) & (num_files != 0):
             break
         if len(data) == max_len_data:
             break

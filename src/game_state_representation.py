@@ -4,7 +4,7 @@ from scipy import spatial
 
 def get_tracking_data_snapshot(tracking_data, timestamp, attacking_team, match_period, field_dimen):
     snapshot = []
-    attacking_team_gk = int(attacking_team) + 2
+    attacking_team_gk = str(int(attacking_team) + 3)
 
     is_attacking = [attacking_team, attacking_team_gk]
     referee = '2'
@@ -45,7 +45,7 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
     sin_angle = np.zeros(field_dimen)
 
     referee = '2'
-    attacking_team_gk = str(int(attacking_team) + 2)
+    attacking_team_gk = str(int(attacking_team) + 3)
     is_attacking = [attacking_team, attacking_team_gk]
 
     # Get row with timestamp
