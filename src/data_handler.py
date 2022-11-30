@@ -144,13 +144,17 @@ def scale_event_coords(event, field_dimen):
     return event
 
 
-def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000):
+def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000, save_every=3):
     all_event_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
     all_tracking_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-{fps}fps.txt.gz', recursive=True)
 
     data = []
 
     for i in range(len(all_event_files)):
+        if (i % save_every == 0) & (i != 0):
+            data_df = pd.concat(data, axis=0, ignore_index=True)
+            data_df.to_csv('../out/pass_data.csv', index=False)
+
         print(f'Reading file {i + 1}...')
         event_file = all_event_files[i]
         tracking_file = all_tracking_files[i]
@@ -167,7 +171,7 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
         for _, pass_event in passing_events.iterrows():
 
             # if (k % 50 == 0) | (k == 0):
-            #     print(f'-- Reading event {k}')
+            #      print(f'-- Reading event {k}')
 
             match_period = str(pass_event['periodId'])
             timestamp = get_frame(pass_event['timeMin'], pass_event['timeSec'], match_period)
@@ -182,7 +186,7 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
                 continue
 
             ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
-            ball_carrier = gsr.get_ball_carier(row['Column 5'].iloc[0], ball_xy)
+            ball_carrier = gsr.get_ball_carrier(row['Column 5'].iloc[0], ball_xy)
             ball_carrier_xy = np.array([ball_carrier['x'], ball_carrier['y']])
             if np.linalg.norm(ball_xy - ball_carrier_xy) > tracking_accuracy:
                 k += 1
@@ -225,8 +229,8 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
             event['Angle ball'] = [game_state_rep[8]]
             event['Angle goal'] = [game_state_rep[9]]
             event['Angle goal rad'] = [game_state_rep[10]]
-            event['Ball carier sine'] = [game_state_rep[11]]
-            event['Ball carier cosine'] = [game_state_rep[12]]
+            event['Ball carrier sine'] = [game_state_rep[11]]
+            event['Ball carrier cosine'] = [game_state_rep[12]]
             event['Outcome'] = outcome
 
             data.append(event)
