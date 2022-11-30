@@ -5,3 +5,4 @@ __pycache__
 sample-data
 *.txt
 bru_data
+out
