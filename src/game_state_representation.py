@@ -52,12 +52,15 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
     all_player_data = row['Column 5'].iloc[0]
     ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
 
-    ball_carier = get_ball_carier(all_player_data, ball_xy)
+    ball_carrier = get_ball_carrier(all_player_data, ball_xy)
 
-    if 'vx' not in ball_carier.keys():
+    if ball_carrier is None:
+        raise ValueError('Ball carrier is None')
+
+    if 'vx' not in ball_carrier.keys():
         raise ValueError('Calculate velocities first')
 
-    velocity_vector_bc = [ball_carier['vx'], ball_carier['vy']]
+    velocity_vector_bc = [ball_carrier['vx'], ball_carrier['vy']]
 
     for player_data in all_player_data:
 
@@ -147,7 +150,7 @@ def get_angle_rad(vec1, vec2):
     return np.arcsin(sine)
 
 
-def get_ball_carier(all_player_data, ball_xy):
+def get_ball_carrier(all_player_data, ball_xy):
     coords = []
     dict_ = {}
 
@@ -158,8 +161,14 @@ def get_ball_carier(all_player_data, ball_xy):
 
     tree = spatial.KDTree(coords)
     (_, idx) = tree.query(ball_xy)
-    closest = coords[idx]
-    closest_player = dict_[closest]
+
+    try:
+        closest = coords[idx]
+        closest_player = dict_[closest]
+    except Exception as e:
+        print(e)
+        return None
+
     return closest_player
 
 

@@ -157,6 +157,10 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
 
         tracking_data = read_tracking_data(DATA_DIR, filename=tracking_file)
         event_data = read_event_data(DATA_DIR, filename=event_file)
+
+        if tracking_data.shape[0] == 0 | event_data.shape[0] == 0:
+            continue
+
         passing_events = event_data[event_data['typeId'] == 1]
 
         k = 0
@@ -168,10 +172,14 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
             match_period = str(pass_event['periodId'])
             timestamp = get_frame(pass_event['timeMin'], pass_event['timeSec'], match_period)
 
-            row = tracking_data[
-                (tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
-            index = tracking_data[(tracking_data['Framecount'] == timestamp) & (
-                    tracking_data['Match period'] == match_period)].index.values[0]
+            try:
+                row = tracking_data[
+                    (tracking_data['Framecount'] == timestamp) & (tracking_data['Match period'] == match_period)]
+                index = tracking_data[(tracking_data['Framecount'] == timestamp) & (
+                        tracking_data['Match period'] == match_period)].index.values[0]
+            except Exception as e:
+                print(f'Exception occurred at line 175: {e}')
+                continue
 
             ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
             ball_carrier = gsr.get_ball_carier(row['Column 5'].iloc[0], ball_xy)
@@ -182,6 +190,11 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
 
 
             attacking_team = get_attacking_team(pass_event, row)
+
+            if attacking_team is None:
+                print('attacking_team is None')
+                continue
+
             row = spf.calc_spatial_features(row, index, tracking_data)
             game_state_rep = gsr.get_game_state_representation(row, attacking_team, field_dimen)
 
@@ -240,9 +253,10 @@ def get_attacking_team(event, row):
     player_id = event['playerId']
     list = row['Column 5'].iloc[0]
 
-    dict = next((item for item in list if item['Player id'] == player_id),
-                ValueError(f'No player found! \n{list}\n{player_id}')
-                )
+    dict = next((item for item in list if item['Player id'] == player_id), None)
+
+    if dict is None:
+        return None
 
     object_type = dict['Object type']
 
