@@ -144,7 +144,7 @@ def scale_event_coords(event, field_dimen):
     return event
 
 
-def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000,
+def read_event_tracking_data(DATA_DIR, field_dimen, save_dir,fps=10, tracking_accuracy=1.3, num_files=0, max_len_data=50000,
                              save_every=5):
     all_event_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
     all_tracking_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-{fps}fps.txt.gz', recursive=True)
@@ -154,7 +154,7 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
     for i in range(len(all_event_files)):
         if (i % save_every == 0) & (i != 0):
             data_df = pd.concat(data, axis=0, ignore_index=True)
-            data_df.to_pickle('../out/pass_data2.pkl')
+            data_df.to_pickle(save_dir)
 
         print(f'Reading file {i + 1}...')
         event_file = all_event_files[i]
@@ -200,7 +200,12 @@ def read_event_tracking_data(DATA_DIR, field_dimen, fps=10, tracking_accuracy=1.
                 continue
 
             row = spf.calc_spatial_features(row, index, tracking_data)
-            game_state_rep = gsr.get_game_state_representation(row, attacking_team, field_dimen)
+            try:
+                game_state_rep = gsr.get_game_state_representation(row, attacking_team, field_dimen)
+            except ValueError as e:
+                print(e)
+                continue
+
             # count = np.count_nonzero(game_state_rep[0])
             # if count != 11:
             #     print(f'Only {count} players on attacking team')

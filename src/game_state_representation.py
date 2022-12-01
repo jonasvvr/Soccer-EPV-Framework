@@ -66,6 +66,10 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
 
         x = int(player_data['x'])
         y = int(player_data['y'])
+
+        if (x >= field_dimen[0]) | (y >= (field_dimen[1])):
+            raise ValueError(f'Out of bounds: x:{x} y:{y}')
+
         vx = player_data['vx']
         vy = player_data['vy']
 
