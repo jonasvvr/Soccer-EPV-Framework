@@ -35,8 +35,10 @@ def get_tracking_data_snapshot(tracking_data, timestamp, attacking_team, match_p
 
 
 def get_sparse_matrices(row, attacking_team, field_dimen):
-    loc_att = np.zeros(field_dimen, dtype=list)
-    loc_def = np.zeros(field_dimen, dtype=list)
+    loc_att_x = np.zeros(field_dimen)
+    loc_att_y = np.zeros(field_dimen)
+    loc_def_x = np.zeros(field_dimen)
+    loc_def_y = np.zeros(field_dimen)
     vx_att = np.zeros(field_dimen)
     vx_def = np.zeros(field_dimen)
     vy_att = np.zeros(field_dimen)
@@ -67,7 +69,7 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
         x = int(player_data['x'])
         y = int(player_data['y'])
 
-        if (x >= field_dimen[0]) | (y >= (field_dimen[1])):
+        if (x >= field_dimen[0]) | (y >= (field_dimen[1])):  # TODO remove this
             raise ValueError(f'Out of bounds: x:{x} y:{y}')
 
         vx = player_data['vx']
@@ -75,7 +77,8 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
 
         if player_data['Object type'] in is_attacking:
             # Location
-            loc_att[x, y] = [player_data['x'], player_data['y']]  # accurate location
+            loc_att_x[x, y] = player_data['x']  # accurate location
+            loc_att_y[x, y] = player_data['y']
 
             # Velocity
             vx_att[x, y] = vx
@@ -88,20 +91,23 @@ def get_sparse_matrices(row, attacking_team, field_dimen):
 
         if (player_data['Object type'] not in is_attacking) & (player_data['Object type'] != referee):
             # Location
-            loc_def[x, y] = [player_data['x'], player_data['y']]
+            loc_def_x[x, y] = player_data['x']
+            loc_def_y[x, y] = player_data['y']
 
             # Velocity
             vx_def[x, y] = vx
             vy_def[x, y] = vy
 
-    return loc_att, loc_def, vx_att, vx_def, vy_att, vy_def, cos_angle, sin_angle
+    return loc_att_x, loc_att_y, loc_def_x, loc_def_y, vx_att, vx_def, vy_att, vy_def, cos_angle, sin_angle
 
 
 def get_dense_matrices(row, field_dimen):
     dist_b = np.zeros(field_dimen)
     dist_g = np.zeros(field_dimen)
-    angle_ball = np.zeros(field_dimen, dtype=list)
-    angle_goal = np.zeros(field_dimen, dtype=list)
+    angle_ball_sin = np.zeros(field_dimen)
+    angle_ball_cos = np.zeros(field_dimen)
+    angle_goal_sin = np.zeros(field_dimen)
+    angle_goal_cos = np.zeros(field_dimen)
     angle_goal_rad = np.zeros(field_dimen)
 
     ball_xy = np.array(row['Ball xyz'].iloc[0][:-1])
@@ -119,15 +125,17 @@ def get_dense_matrices(row, field_dimen):
 
             cos_ball = get_cosine_angle(a, ball_xy)
             sin_ball = get_sine_angle(a, ball_xy)
-            angle_ball[x, y] = [sin_ball, cos_ball]
+            angle_ball_sin[x, y] = sin_ball
+            angle_goal_cos[x, y] = cos_ball
 
             cos_goal = get_cosine_angle(a, goal_xy)
             sin_goal = get_sine_angle(a, goal_xy)
-            angle_goal[x, y] = [sin_goal, cos_goal]
+            angle_goal_sin[x, y] = sin_goal
+            angle_goal_cos[x, y] = cos_goal
 
             angle_goal_rad[x, y] = get_angle_rad(a, goal_xy)
 
-    return dist_b, dist_g, angle_ball, angle_goal, angle_goal_rad
+    return dist_b, dist_g, angle_ball_sin, angle_ball_cos, angle_goal_sin, angle_goal_cos, angle_goal_rad
 
 
 def get_cosine_angle(vec1, vec2):
@@ -135,7 +143,8 @@ def get_cosine_angle(vec1, vec2):
     vec1_mag = np.linalg.norm(vec1)
     vec2_mag = np.linalg.norm(vec2)
     denom = vec1_mag * vec2_mag
-    if denom == 0: return 0
+    if denom == 0:
+        return 0
     return dot / denom
 
 
@@ -145,7 +154,8 @@ def get_sine_angle(vec1, vec2):
     vec1_mag = np.linalg.norm(vec1)
     vec2_mag = np.linalg.norm(vec2)
     denom = vec1_mag * vec2_mag
-    if denom == 0: return 0
+    if denom == 0:
+        return 0
     return cross_norm / denom
 
 
@@ -177,8 +187,12 @@ def get_ball_carrier(all_player_data, ball_xy):
 
 
 def get_game_state_representation(row, attacking_team, field_dimen):
-    loc_att, loc_def, vx_att, vx_def, vy_att, vy_def, cos_angle, sin_angle = get_sparse_matrices(row, attacking_team, field_dimen)
-    dist_b, dist_g, angle_ball, angle_goal, angle_goal_rad = get_dense_matrices(row, field_dimen)
+    loc_att_x, loc_att_y, loc_def_x, loc_def_y, vx_att, vx_def, vy_att, vy_def, cos_angle, sin_angle = get_sparse_matrices(
+        row, attacking_team,
+        field_dimen)
+    dist_b, dist_g, angle_ball_sin, angle_ball_cos, angle_goal_sin, angle_goal_cos, angle_goal_rad = get_dense_matrices(
+        row, field_dimen)
 
-    return [loc_att, loc_def, vx_att, vx_def, vy_att, vy_def, dist_b, dist_g, angle_ball, angle_goal, angle_goal_rad,
+    return [loc_att_x, loc_att_y, loc_def_x, loc_def_y, vx_att, vx_def, vy_att, vy_def, dist_b, dist_g, angle_ball_sin,
+            angle_ball_cos, angle_goal_sin, angle_goal_cos, angle_goal_rad,
             sin_angle, cos_angle]
