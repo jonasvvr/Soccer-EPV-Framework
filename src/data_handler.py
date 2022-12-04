@@ -142,12 +142,13 @@ def scale_event_coords(event, field_dimen):
 def read_event_tracking_data(DATA_DIR, field_dimen, save_dir, fps=10, tracking_accuracy=1.3, num_files=0,
                              max_len_data=50000,
                              save_every=5):
-    column_names = ['Event start', 'Event end', 'Loc attack x', 'Loc attack y', 'Loc defend x', 'Loc defend y',
+    column_names = ['Event start', 'Event end', 'Loc attack', 'Loc defend',
                     'vx attack', 'vx defend',
                     'vy attack', 'vy defend',
                     'Distance ball', 'Distance goal', 'Angle ball sin', 'Angle ball cos', 'Angle goal sin',
                     'Angle goal cos', 'Angle goal rad',
                     'Ball carrier sine', 'Ball carrier cosine', 'Outcome']
+
     all_event_files = glob.glob(f'{DATA_DIR}/**/*events.json.gz', recursive=True)
     all_tracking_files = glob.glob(f'{DATA_DIR}/**/opt-tracking-{fps}fps.txt.gz', recursive=True)
 

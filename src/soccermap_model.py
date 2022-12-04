@@ -17,7 +17,7 @@ class SoccerMap:
         return pad(x, paddings, "SYMMETRIC")
 
     def get_model(self):
-        pass_input = Input(shape=(self.field_dimen[0], self.field_dimen[1], 17), name='pass_input')
+        pass_input = Input(shape=(self.field_dimen[0], self.field_dimen[1], 15), name='pass_input')
         dest_input = Input(shape=(self.field_dimen[0], self.field_dimen[1], 1), name='dest_input')
 
         x = Conv2D(32, (5, 5), activation='relu')(pass_input)
