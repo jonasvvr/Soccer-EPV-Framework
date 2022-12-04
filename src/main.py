@@ -10,9 +10,7 @@ DATA_DIR_single = '../bru_data/data/comp-4zwgbb66rif2spcoeeol2motx/tmcl-1qtpbdbe
 FIELD_DIMEN = (108, 72)
 SAVE_DIR = '../out/pass_data3.pkl'
 
-# pass_data = dh.read_event_tracking_data(DATA_DIR, FIELD_DIMEN, SAVE_DIR, num_files=1)
-# pass_data.to_pickle(SAVE_DIR, compression='gzip')
+pass_data = dh.read_event_tracking_data(DATA_DIR, FIELD_DIMEN, SAVE_DIR, num_files=1)
+pass_data.to_pickle(SAVE_DIR, compression='gzip')
 
-pass_data = pd.read_pickle(SAVE_DIR, compression='gzip')
-loc_attack = pass_data['Loc attack'].iloc[0]
-print(pass_data)
+# pass_data = pd.read_pickle(SAVE_DIR, compression='gzip')

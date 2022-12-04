@@ -13,7 +13,7 @@ class SoccerMap:
         self.model, self.full = self.get_model()
 
     def symmetric_pad(self, x):
-        paddings = constant([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]])
+        paddings = constant([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
         return pad(x, paddings, "SYMMETRIC")
 
     def get_model(self):

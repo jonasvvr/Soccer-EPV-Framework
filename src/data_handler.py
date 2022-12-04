@@ -200,6 +200,9 @@ def read_event_tracking_data(DATA_DIR, field_dimen, save_dir, fps=10, tracking_a
                 print('attacking_team is None')
                 continue
 
+            # attacking team is playing from left to right
+            row = normalize_tracking_frame(row, attacking_team, field_dimen)
+
             row = spf.calc_spatial_features(row, index, tracking_data)
             try:
                 game_state_rep = gsr.get_game_state_representation(row, attacking_team,
@@ -317,6 +320,7 @@ def out_of_bounds(pass_event, field_dimen):
         return True
     return False
 
+
 def data_to_tensor(data):
     for (x, y), elem in np.ndenumerate(data):
         data[x, y] = tf.convert_to_tensor(elem)
@@ -328,3 +332,38 @@ def data_to_tensor(data):
 def data_to_tensor2(data):
     stacked_rows = [tf.convert_to_tensor(row) for row in data]
     return tf.stack(stacked_rows)
+
+
+def normalize_tracking_frame(tracking_frame, attacking_team, field_dimen):
+    if is_correct_attacking_direction(tracking_frame, attacking_team):
+        return tracking_frame
+
+    field_length = field_dimen[0]
+
+    ball_xyz = tracking_frame.iloc[0]['Ball xyz']
+    tracking_frame.iloc[0]['Ball xyz'] = [abs(ball_xyz[0] - field_length), ball_xyz[1], ball_xyz[2]]
+
+    player_data = tracking_frame.iloc[0]['Column 5']
+    for player in player_data:
+        x = player['x']
+        player['x'] = abs(x - field_length)
+
+    return tracking_frame
+
+
+def is_correct_attacking_direction(tracking_frame, attacking_team):
+    match_period = tracking_frame.iloc[0]['Match period']
+
+    match attacking_team:
+        case '0':
+            return match_period == '1'
+        case '1':
+            return match_period == '2'
+        case '2':
+            raise ValueError('Attacking team is referee')
+        case '3':
+            return match_period == '1'
+        case '4':
+            return match_period == '2'
+        case _:
+            raise ValueError(f'Object type has an invalid value: {attacking_team}')
